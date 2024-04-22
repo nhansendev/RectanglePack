@@ -2,7 +2,7 @@
 ![image](https://github.com/nhansendev/RectanglePack/assets/9289200/67492a9b-baf2-4609-bb56-0cf20404672a)
 ![image](https://github.com/nhansendev/RectanglePack/assets/9289200/94f78ece-28e1-482b-a0ff-2bf277423906)
 
-This project expands on the capabilities of the (rectangle-packer)[https://github.com/Penlect/rectangle-packer] package primarily by adding efficient rotation checking (missing from the base package) and the ability to maximize area usage of stock.
+This project expands on the capabilities of the [rectangle-packer](https://github.com/Penlect/rectangle-packer) package primarily by adding efficient rotation checking (missing from the base package) and the ability to maximize area usage of stock.
 
 ### Requirements
 - Python 3.6+
