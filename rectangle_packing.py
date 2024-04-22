@@ -239,8 +239,9 @@ def plot_text(axs, sizes, positions):
                 str(sizes[i]),
                 rotation="vertical",
                 rotation_mode="anchor",
-                horizontalalignment="center",
-                verticalalignment="center",
+                ha="center",
+                va="center",
+                fontsize=10,
             )
         else:
             axs.text(
@@ -248,8 +249,9 @@ def plot_text(axs, sizes, positions):
                 cy,
                 str(sizes[i]),
                 rotation_mode="anchor",
-                horizontalalignment="center",
-                verticalalignment="center",
+                ha="center",
+                va="center",
+                fontsize=10,
             )
 
 
@@ -268,11 +270,12 @@ def plot_positions(sizes, positions, max_width, max_height, show_sizes=True):
         )
     )
 
+    if show_sizes:
+        plot_text(axs[0], sizes, positions)
+
     rects = []
     for i, p in enumerate(positions):
         rects.append(Rectangle(p, *sizes[i]))
-        if show_sizes:
-            plot_text(plt, sizes, positions)
     axs[0].add_collection(PatchCollection(rects, alpha=1, ec="k", fc="white"))
 
     axs[0].set_ylim(-1, max_height + 1)
@@ -291,13 +294,10 @@ def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
     # represented by 2-tuples of [(x, y), (x, y), ...]
     # plot the shapes
 
-    transpose = max_width <= max_height
-
     N = len(sheets)
-    if transpose:
-        fig, ax = plt.subplots(1, N, sharey=True)
-    else:
-        fig, ax = plt.subplots(N, 1, sharex=True)
+    n = int(N**0.5)
+    m = int(N / n + 0.5)
+    fig, ax = plt.subplots(n, m, sharex="col", sharey="row")
     axs = fig.axes
     plt.tight_layout(pad=0)
 
@@ -311,15 +311,15 @@ def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
         )
 
     for j, (sizes, positions) in enumerate(sheets):
+        if show_sizes:
+            plot_text(axs[j], sizes, positions)
         rects = []
         for i, p in enumerate(positions):
             rects.append(Rectangle(p, *sizes[i]))
-            if show_sizes:
-                plot_text(axs[j], sizes, positions)
         axs[j].add_collection(PatchCollection(rects, alpha=1, ec="k", fc="white"))
 
-        axs[j].set_ylim(0, max_height)
-        axs[j].set_xlim(0, max_width)
+        axs[j].set_ylim(-1, max_height + 1)
+        axs[j].set_xlim(-1, max_width + 1)
         axs[j].set_aspect("equal")
         axs[j].set_frame_on(False)
 
@@ -327,29 +327,28 @@ def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
 
 
 if __name__ == "__main__":
-    # from random import randint
+    from random import randint
 
-    # sizes = []
-    # for _ in range(10):
-    #     sizes.append((randint(2, 30), randint(2, 30)))
+    sizes = []
+    for _ in range(10):
+        sizes.append((randint(2, 30), randint(2, 30)))
 
     # sizes = [(4, 3), (4, 3), (2, 2), (2, 2), (3, 1), (8, 7), (7, 8), (2, 10)]
     # sizes = [(13, 39)] * 18
 
-    sizes = [(3, 30)] * 30
+    # sizes = [(5, 30)] * 30
 
-    stock_width = 50
-    stock_height = 50
-
-    # packed_sizes, positions = find_max_usage(sizes, stock_width, stock_height, None)
+    stock_width = 40
+    stock_height = 30
 
     sheets = multi_sheet_packing(sizes, stock_width, stock_height)
-
-    # packed_sizes, positions = find_optimal_packing(sizes, stock_width, stock_height)
 
     if len(sheets) > 0:
         multi_plot_positions(sheets, stock_width, stock_height)
 
-    # for packed_sizes, positions in sheets:
-    #     if packed_sizes is not None:
-    #         plot_positions(packed_sizes, positions, stock_width, stock_height)
+    # packed_sizes, positions = find_max_usage(sizes, stock_width, stock_height, None)
+
+    # packed_sizes, positions = find_optimal_packing(sizes, stock_width, stock_height)
+
+    # if packed_sizes is not None:
+    #     plot_positions(packed_sizes, positions, stock_width, stock_height)
