@@ -127,7 +127,7 @@ def find_optimal_packing(sizes, max_width, max_height, verbose=False):
         return best_sizes, best_positions
 
 
-def find_sorted_areas(sizes, area, threshold=0.9, verbose=True):
+def find_sorted_areas(sizes, area, threshold=0.9, verbose=False):
     # Given a list of rectangles represented by 2-tuples of
     # the format [(w, h), (w, h), ...] find which combinations
     # fit within a given area, then sort by total area of shapes.
@@ -174,7 +174,7 @@ def find_sorted_areas(sizes, area, threshold=0.9, verbose=True):
     return [v[0] for v in output], [v[1] for v in output]
 
 
-def find_max_usage(sizes, width, height, threshold=0.9, verbose=True):
+def find_max_usage(sizes, width, height, threshold=0.9, verbose=False):
     # Given a list of rectangles represented by 2-tuples of
     # the format [(w, h), (w, h), ...] find the optimal combination
     # and placements to use as much area within the width and height as possible.
@@ -185,10 +185,12 @@ def find_max_usage(sizes, width, height, threshold=0.9, verbose=True):
     )
 
     N = len(size_sets)
-    print(f"Found {N} sets of shapes that fit within given area")
+    if verbose:
+        print(f"Found {N} sets of shapes that fit within given area")
 
     for i, sset in enumerate(size_sets):
-        print(f"> Trying set {i+1} of {N}...")
+        if verbose:
+            print(f"> Trying set {i+1} of {N}...")
         best_sizes, best_positions = find_optimal_packing(sset, width, height)
 
         # Since we're evaluating in descending order of area used, the first valid solution is the best
@@ -200,11 +202,58 @@ def find_max_usage(sizes, width, height, threshold=0.9, verbose=True):
             return best_sizes, best_positions
         # print("No solutions")
 
-    print("No solutions found!")
+    if verbose:
+        print("No solutions found!")
     return None, None
 
 
-def plot_positions(sizes, positions, max_width, max_height):
+def multi_sheet_packing(sizes, width, height, verbose=True):
+    remaining_sizes = [*sizes]
+    sheets = []
+    while len(remaining_sizes) > 0:
+        located_sizes, positions = find_max_usage(remaining_sizes, width, height, None)
+        if located_sizes is None:
+            break
+        sheets.append([located_sizes, positions])
+        for s in located_sizes:
+            if s in remaining_sizes:
+                remaining_sizes.remove(s)
+            elif (s[1], s[0]) in remaining_sizes:
+                remaining_sizes.remove((s[1], s[0]))
+
+    if verbose:
+        items = sum([len(s[0]) for s in sheets])
+        print(f"Fit {items} items on {len(sheets)} sheets")
+
+    return sheets
+
+
+def plot_text(axs, sizes, positions):
+    for i, p in enumerate(positions):
+        cx = p[0] + sizes[i][0] / 2
+        cy = p[1] + sizes[i][1] / 2
+        if sizes[i][0] < sizes[i][1]:
+            axs.text(
+                cx,
+                cy,
+                str(sizes[i]),
+                rotation="vertical",
+                rotation_mode="anchor",
+                horizontalalignment="center",
+                verticalalignment="center",
+            )
+        else:
+            axs.text(
+                cx,
+                cy,
+                str(sizes[i]),
+                rotation_mode="anchor",
+                horizontalalignment="center",
+                verticalalignment="center",
+            )
+
+
+def plot_positions(sizes, positions, max_width, max_height, show_sizes=True):
     # Given a list of rectangles represented by 2-tuples of
     # the format [(w, h), (w, h), ...] and their positions
     # represented by 2-tuples of [(x, y), (x, y), ...]
@@ -222,6 +271,8 @@ def plot_positions(sizes, positions, max_width, max_height):
     rects = []
     for i, p in enumerate(positions):
         rects.append(Rectangle(p, *sizes[i]))
+        if show_sizes:
+            plot_text(plt, sizes, positions)
     axs[0].add_collection(PatchCollection(rects, alpha=1, ec="k", fc="white"))
 
     axs[0].set_ylim(-1, max_height + 1)
@@ -234,22 +285,71 @@ def plot_positions(sizes, positions, max_width, max_height):
     plt.show()
 
 
+def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
+    # Given a list of sheets containing rectangles represented by 2-tuples of
+    # the format [(w, h), (w, h), ...] and their positions
+    # represented by 2-tuples of [(x, y), (x, y), ...]
+    # plot the shapes
+
+    transpose = max_width <= max_height
+
+    N = len(sheets)
+    if transpose:
+        fig, ax = plt.subplots(1, N, sharey=True)
+    else:
+        fig, ax = plt.subplots(N, 1, sharex=True)
+    axs = fig.axes
+    plt.tight_layout(pad=0)
+
+    for i in range(N):
+        axs[i].add_collection(
+            PatchCollection(
+                [Rectangle((0, 0), max_width, max_height)],
+                ec="k",
+                fc=(0.9, 0.9, 0.9, 1),
+            )
+        )
+
+    for j, (sizes, positions) in enumerate(sheets):
+        rects = []
+        for i, p in enumerate(positions):
+            rects.append(Rectangle(p, *sizes[i]))
+            if show_sizes:
+                plot_text(axs[j], sizes, positions)
+        axs[j].add_collection(PatchCollection(rects, alpha=1, ec="k", fc="white"))
+
+        axs[j].set_ylim(0, max_height)
+        axs[j].set_xlim(0, max_width)
+        axs[j].set_aspect("equal")
+        axs[j].set_frame_on(False)
+
+    plt.show()
+
+
 if __name__ == "__main__":
-    from random import randint
+    # from random import randint
 
-    sizes = []
-    for _ in range(10):
-        sizes.append((randint(2, 30), randint(2, 30)))
+    # sizes = []
+    # for _ in range(10):
+    #     sizes.append((randint(2, 30), randint(2, 30)))
 
-    # sizes = [(4, 3), (4, 3), (2, 2), (2, 2), (3, 1), (8, 7), (7, 8), (2, 10), (1, 1)]
+    # sizes = [(4, 3), (4, 3), (2, 2), (2, 2), (3, 1), (8, 7), (7, 8), (2, 10)]
     # sizes = [(13, 39)] * 18
 
-    stock_width = 40
+    sizes = [(3, 30)] * 30
+
+    stock_width = 50
     stock_height = 50
 
-    packed_sizes, positions = find_max_usage(sizes, stock_width, stock_height, None)
+    # packed_sizes, positions = find_max_usage(sizes, stock_width, stock_height, None)
+
+    sheets = multi_sheet_packing(sizes, stock_width, stock_height)
 
     # packed_sizes, positions = find_optimal_packing(sizes, stock_width, stock_height)
 
-    if packed_sizes is not None:
-        plot_positions(packed_sizes, positions, stock_width, stock_height)
+    if len(sheets) > 0:
+        multi_plot_positions(sheets, stock_width, stock_height)
+
+    # for packed_sizes, positions in sheets:
+    #     if packed_sizes is not None:
+    #         plot_positions(packed_sizes, positions, stock_width, stock_height)
