@@ -207,7 +207,7 @@ def find_max_usage(sizes, width, height, threshold=0.9, verbose=False):
     return None, None
 
 
-def multi_sheet_packing(sizes, width, height, verbose=True):
+def multi_sheet_packing(sizes, width, height, max_sheets=10, verbose=True):
     remaining_sizes = [*sizes]
     sheets = []
     while len(remaining_sizes) > 0:
@@ -220,6 +220,8 @@ def multi_sheet_packing(sizes, width, height, verbose=True):
                 remaining_sizes.remove(s)
             elif (s[1], s[0]) in remaining_sizes:
                 remaining_sizes.remove((s[1], s[0]))
+        if len(sheets) >= max_sheets:
+            break
 
     if verbose:
         items = sum([len(s[0]) for s in sheets])
@@ -295,13 +297,13 @@ def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
     # plot the shapes
 
     N = len(sheets)
-    n = int(N**0.5)
+    n = int(N / 2 + 0.5)
     m = int(N / n + 0.5)
-    fig, ax = plt.subplots(n, m, sharex="col", sharey="row")
+    fig, ax = plt.subplots(m, n, sharex="col", sharey="row")
     axs = fig.axes
-    plt.tight_layout(pad=0)
+    plt.tight_layout()
 
-    for i in range(N):
+    for i in range(n * m):
         axs[i].add_collection(
             PatchCollection(
                 [Rectangle((0, 0), max_width, max_height)],
@@ -323,25 +325,33 @@ def multi_plot_positions(sheets, max_width, max_height, show_sizes=True):
         axs[j].set_aspect("equal")
         axs[j].set_frame_on(False)
 
+    for j in range(n * m - N):
+        # Hide unused plots
+        # axs[N + j].set_axis_off()
+        axs[N + j].set_ylim(-1, max_height + 1)
+        axs[N + j].set_xlim(-1, max_width + 1)
+        axs[N + j].set_aspect("equal")
+        axs[N + j].set_frame_on(False)
+
     plt.show()
 
 
 if __name__ == "__main__":
-    from random import randint
+    # from random import randint
 
-    sizes = []
-    for _ in range(10):
-        sizes.append((randint(2, 30), randint(2, 30)))
+    # sizes = []
+    # for _ in range(20):
+    #     sizes.append((randint(2, 30), randint(2, 30)))
 
     # sizes = [(4, 3), (4, 3), (2, 2), (2, 2), (3, 1), (8, 7), (7, 8), (2, 10)]
     # sizes = [(13, 39)] * 18
 
-    # sizes = [(5, 30)] * 30
+    sizes = [(5, 30)] * 500
 
-    stock_width = 40
-    stock_height = 30
+    stock_width = 50
+    stock_height = 40
 
-    sheets = multi_sheet_packing(sizes, stock_width, stock_height)
+    sheets = multi_sheet_packing(sizes, stock_width, stock_height, max_sheets=50)
 
     if len(sheets) > 0:
         multi_plot_positions(sheets, stock_width, stock_height)
