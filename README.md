@@ -51,15 +51,18 @@ if packed_sizes is not None:
 ```
 
 #### Multi-Sheet Packing
-![image](https://github.com/nhansendev/RectanglePack/assets/9289200/30e3952f-782c-45f0-b986-b20b04896bbc)
+![image](https://github.com/nhansendev/RectanglePack/assets/9289200/cce2b118-7a56-499d-9b1c-03cde8430325)
 
 ```python
 from rectangle_packing import multi_sheet_packing, multi_plot_positions
+from random import randint
 
-sizes = [(3, 30)] * 30
+sizes = []
+for _ in range(10):
+    sizes.append((randint(2, 30), randint(2, 30)))
 
 stock_width = 40
-stock_height = 50
+stock_height = 30
 
 # Pack as many items onto one sheet as possible, then pack the remaining items
 # onto another sheet. Repeat until all items are packed.
