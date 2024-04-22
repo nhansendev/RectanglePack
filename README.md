@@ -10,6 +10,13 @@ This Python project expands on the capabilities of the [rectangle-packer](https:
 - matplotlib
 
 ### Usage
+Note: the more unique sizes there are the slower it will typically run. 
+
+Ex:
+- Fitting 500 of the same item onto 42 sheets: 0.1 sec
+- Fitting 20 unique items onto 4 sheets: 5.9 sec
+
+
 #### Optimal Packing
 ```python
 from rectangle_packing import find_optimal_packing, plot_positions
